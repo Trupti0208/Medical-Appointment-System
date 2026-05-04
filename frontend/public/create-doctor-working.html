@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Doctor - Working Version</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+        .main-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .create-doctor-section {
+            background-color: #007bff;
+            padding: 40px;
+            margin: 20px 0;
+            border-radius: 15px;
+            text-align: center;
+            border: 5px solid #0056b3;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+        }
+        .create-doctor-title {
+            color: white;
+            font-size: 36px;
+            margin-bottom: 25px;
+            font-weight: bold;
+        }
+        .create-doctor-subtitle {
+            color: white;
+            font-size: 18px;
+            margin-bottom: 30px;
+        }
+        .create-doctor-button {
+            background-color: #28a745;
+            border-color: #28a745;
+            color: white;
+            font-size: 24px;
+            padding: 20px 60px;
+            font-weight: bold;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .create-doctor-button:hover {
+            background-color: #218838;
+            border-color: #218838;
+            color: white;
+        }
+        .form-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-label {
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+        }
+        .btn-container {
+            text-align: center;
+            margin-top: 30px;
+        }
+        .success-message {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border: 1px solid #c3e6cb;
+        }
+        .error-message {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <h1 class="text-center mb-4">
+            <i class="fas fa-stethoscope"></i>
+            Medical Appointment System
+        </h1>
+        
+        <div class="create-doctor-section">
+            <div class="create-doctor-title">
+                <i class="fas fa-plus"></i>
+                CREATE NEW DOCTOR PROFILE
+            </div>
+            <div class="create-doctor-subtitle">
+                Click the button below to add a new doctor to the system
+            </div>
+            <button class="btn btn-success create-doctor-button" onclick="showDoctorForm()">
+                <i class="fas fa-plus"></i>
+                CLICK HERE TO CREATE DOCTOR
+            </button>
+        </div>
+
+        <div id="doctorFormContainer" style="display: none;">
+            <div class="form-container">
+                <h2 class="text-center mb-4">
+                    <i class="fas fa-user-md"></i>
+                    Doctor Information
+                </h2>
+                
+                <form id="doctorForm" onsubmit="createDoctor(event)">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Email Address *</label>
+                                <input type="email" class="form-control" id="email" required placeholder="doctor@medical.com">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Password *</label>
+                                <input type="password" class="form-control" id="password" required placeholder="Enter password">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">First Name *</label>
+                                <input type="text" class="form-control" id="firstName" required placeholder="John">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Last Name *</label>
+                                <input type="text" class="form-control" id="lastName" required placeholder="Doe">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Display Name *</label>
+                                <input type="text" class="form-control" id="doctorName" required placeholder="Dr. John Doe">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Specialization *</label>
+                                <input type="text" class="form-control" id="specialization" required placeholder="Cardiology">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" id="phone" placeholder="+1-555-123-4567">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">License Number *</label>
+                                <input type="text" class="form-control" id="licenseNumber" required placeholder="DOC123456">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="btn-container">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save"></i>
+                            Create Doctor
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-lg ms-3" onclick="hideDoctorForm()">
+                            <i class="fas fa-times"></i>
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="messageContainer"></div>
+
+        <div class="text-center mt-4">
+            <h3><i class="fas fa-info-circle"></i> System Information</h3>
+            <p><strong>Backend URL:</strong> <a href="http://127.0.0.1:8000" target="_blank">http://127.0.0.1:8000</a></p>
+            <p><strong>Frontend URL:</strong> <a href="http://localhost:3000" target="_blank">http://localhost:3000</a></p>
+            <p><strong>Admin Login:</strong> admin@medical.com / admin123</p>
+            <p><strong>Patient Login:</strong> john.patient@email.com / password123</p>
+        </div>
+    </div>
+
+    <script>
+        let authToken = '';
+
+        // Login as admin to get token
+        async function loginAsAdmin() {
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/auth/login/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Origin': 'http://localhost:3000'
+                    },
+                    body: JSON.stringify({
+                        email: 'admin2@medical.com',
+                        password: 'admin123'
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    authToken = data.access;
+                    showMessage('Admin login successful!', 'success');
+                    return true;
+                } else {
+                    showMessage('Admin login failed!', 'error');
+                    return false;
+                }
+            } catch (error) {
+                showMessage('Login error: ' + error.message, 'error');
+                return false;
+            }
+        }
+
+        // Show doctor creation form
+        function showDoctorForm() {
+            document.getElementById('doctorFormContainer').style.display = 'block';
+            // Auto-login as admin when form is shown
+            loginAsAdmin();
+        }
+
+        // Hide doctor creation form
+        function hideDoctorForm() {
+            document.getElementById('doctorFormContainer').style.display = 'none';
+        }
+
+        // Show message to user
+        function showMessage(message, type) {
+            const container = document.getElementById('messageContainer');
+            const className = type === 'success' ? 'success-message' : 'error-message';
+            container.innerHTML = `<div class="${className}">${message}</div>`;
+            
+            // Hide message after 5 seconds
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+
+        // Create doctor function
+        async function createDoctor(event) {
+            event.preventDefault();
+            
+            if (!authToken) {
+                showMessage('Please wait for admin login...', 'error');
+                return;
+            }
+
+            const formData = {
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                first_name: document.getElementById('firstName').value,
+                last_name: document.getElementById('lastName').value,
+                name: document.getElementById('doctorName').value,
+                specialization: document.getElementById('specialization').value,
+                phone: document.getElementById('phone').value,
+                license_number: document.getElementById('licenseNumber').value,
+                role: 'DOCTOR'
+            };
+
+            try {
+                showMessage('Creating user account...', 'success');
+                
+                // Step 1: Create user account
+                const userResponse = await fetch('http://127.0.0.1:8000/api/auth/register/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`,
+                        'Origin': 'http://localhost:3000'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!userResponse.ok) {
+                    const errorData = await userResponse.json();
+                    throw new Error(JSON.stringify(errorData));
+                }
+
+                const userData = await userResponse.json();
+                showMessage('User account created successfully!', 'success');
+
+                // Step 2: Create doctor profile
+                const doctorData = {
+                    user_id: userData.id,
+                    name: formData.name,
+                    specialization: formData.specialization,
+                    phone: formData.phone,
+                    license_number: formData.license_number,
+                    is_available: true,
+                    consultation_fee: 150.00
+                };
+
+                showMessage('Creating doctor profile...', 'success');
+
+                const doctorResponse = await fetch('http://127.0.0.1:8000/api/doctors/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`,
+                        'Origin': 'http://localhost:3000'
+                    },
+                    body: JSON.stringify(doctorData)
+                });
+
+                if (!doctorResponse.ok) {
+                    const errorData = await doctorResponse.json();
+                    throw new Error(JSON.stringify(errorData));
+                }
+
+                const doctorResult = await doctorResponse.json();
+                showMessage(`Doctor created successfully! ID: ${doctorResult.id}, Name: ${doctorResult.name}`, 'success');
+                
+                // Reset form
+                document.getElementById('doctorForm').reset();
+                hideDoctorForm();
+                
+            } catch (error) {
+                showMessage('Error creating doctor: ' + error.message, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Direct Registration Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        input { padding: 5px; margin: 5px; width: 200px; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; max-height: 300px; }
+        .form-group { margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🏥 Direct Registration Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Registration Form</h2>
+        <form id="registrationForm">
+            <div class="form-group">
+                <label>First Name:</label><br>
+                <input type="text" id="firstName" value="Test" required>
+            </div>
+            <div class="form-group">
+                <label>Last Name:</label><br>
+                <input type="text" id="lastName" value="Patient" required>
+            </div>
+            <div class="form-group">
+                <label>Email:</label><br>
+                <input type="email" id="email" value="test.user@email.com" required>
+            </div>
+            <div class="form-group">
+                <label>Username:</label><br>
+                <input type="text" id="username" value="test_user" required>
+            </div>
+            <div class="form-group">
+                <label>Password:</label><br>
+                <input type="password" id="password" value="password123" required>
+            </div>
+            <div class="form-group">
+                <label>Confirm Password:</label><br>
+                <input type="password" id="passwordConfirm" value="password123" required>
+            </div>
+            <div class="form-group">
+                <label>Role:</label><br>
+                <select id="role">
+                    <option value="PATIENT" selected>PATIENT</option>
+                    <option value="DOCTOR">DOCTOR</option>
+                    <option value="ADMIN">ADMIN</option>
+                </select>
+            </div>
+            <button type="submit">Register User</button>
+            <button type="button" onclick="clearForm()">Clear Form</button>
+        </form>
+        <div id="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Quick Test Buttons</h2>
+        <button onclick="testValidRegistration()">Test Valid Registration</button>
+        <button onclick="testDuplicateEmail()">Test Duplicate Email</button>
+        <button onclick="testPasswordMismatch()">Test Password Mismatch</button>
+        <button onclick="openReactApp()">Open React App</button>
+        <div id="quick-result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:8000/api';
+
+        document.getElementById('registrationForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            await registerUser();
+        });
+
+        async function registerUser() {
+            const resultDiv = document.getElementById('result');
+            const formData = {
+                username: document.getElementById('username').value,
+                email: document.getElementById('email').value,
+                first_name: document.getElementById('firstName').value,
+                last_name: document.getElementById('lastName').value,
+                password: document.getElementById('password').value,
+                password_confirm: document.getElementById('passwordConfirm').value,
+                role: document.getElementById('role').value,
+                phone: '',
+                date_of_birth: '',
+                address: ''
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/register/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Origin': 'http://localhost:3000'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h3>✅ Registration Successful!</h3>
+                            <p><strong>User ID:</strong> ${data.user.id}</p>
+                            <p><strong>Username:</strong> ${data.user.username}</p>
+                            <p><strong>Email:</strong> ${data.user.email}</p>
+                            <p><strong>Full Name:</strong> ${data.user.full_name}</p>
+                            <p><strong>Role:</strong> ${data.user.role}</p>
+                            <p><strong>Access Token:</strong> ${data.access.substring(0, 50)}...</p>
+                            <p><strong>Refresh Token:</strong> ${data.refresh.substring(0, 50)}...</p>
+                            <p><strong>Message:</strong> ${data.message}</p>
+                            <button onclick="openReactApp()">Test in React App →</button>
+                        </div>
+                    `;
+                } else {
+                    let errorHtml = '<div class="error"><h3>❌ Registration Failed!</h3>';
+                    for (const [field, errors] of Object.entries(data)) {
+                        if (Array.isArray(errors)) {
+                            errorHtml += `<p><strong>${field}:</strong> ${errors.join(', ')}</p>`;
+                        } else {
+                            errorHtml += `<p><strong>${field}:</strong> ${errors}</p>`;
+                        }
+                    }
+                    errorHtml += '</div>';
+                    resultDiv.innerHTML = errorHtml;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Network Error!</h3>
+                        <p>Error: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testValidRegistration() {
+            const resultDiv = document.getElementById('quick-result');
+            const timestamp = Date.now();
+            const formData = {
+                username: `test_user_${timestamp}`,
+                email: `test_${timestamp}@email.com`,
+                first_name: 'Test',
+                last_name: 'User',
+                password: 'password123',
+                password_confirm: 'password123',
+                role: 'PATIENT'
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/register/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Origin': 'http://localhost:3000'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h3>✅ Quick Test Successful!</h3>
+                            <p>User created: ${data.user.username}</p>
+                            <p>Email: ${data.user.email}</p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h3>❌ Quick Test Failed!</h3>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Network Error!</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testDuplicateEmail() {
+            const resultDiv = document.getElementById('quick-result');
+            const formData = {
+                username: 'duplicate_test',
+                email: 'john.patient@email.com', // Existing email
+                first_name: 'Test',
+                last_name: 'Duplicate',
+                password: 'password123',
+                password_confirm: 'password123',
+                role: 'PATIENT'
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/register/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Origin': 'http://localhost:3000'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Duplicate Email Test (Expected to Fail)</h3>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Network Error!</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testPasswordMismatch() {
+            const resultDiv = document.getElementById('quick-result');
+            const timestamp = Date.now();
+            const formData = {
+                username: `mismatch_test_${timestamp}`,
+                email: `mismatch_${timestamp}@email.com`,
+                first_name: 'Test',
+                last_name: 'Mismatch',
+                password: 'password123',
+                password_confirm: 'differentpassword',
+                role: 'PATIENT'
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/register/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Origin': 'http://localhost:3000'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Password Mismatch Test (Expected to Fail)</h3>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Network Error!</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function clearForm() {
+            document.getElementById('registrationForm').reset();
+            document.getElementById('result').innerHTML = '';
+        }
+
+        function openReactApp() {
+            window.open('http://localhost:3000', '_blank');
+        }
+
+        // Auto-generate unique username and email on page load
+        window.onload = function() {
+            const timestamp = Date.now();
+            document.getElementById('username').value = `test_user_${timestamp}`;
+            document.getElementById('email').value = `test_${timestamp}@email.com`;
+        };
+    </script>
+</body>
+</html>

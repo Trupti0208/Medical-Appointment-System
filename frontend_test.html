@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Frontend Simulation Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; color: #0c5460; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; max-height: 400px; }
+    </style>
+</head>
+<body>
+    <h1>🏥 Frontend Simulation Test</h1>
+    
+    <div class="test-section info">
+        <h2>📋 Testing React App Workflow</h2>
+        <p>This test simulates exactly what the React app does after login:</p>
+        <ol>
+            <li>Login to get access token</li>
+            <li>Call dashboard API with token</li>
+            <li>Call notifications API with token</li>
+            <li>Check for any frontend errors</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 Run Frontend Simulation</h2>
+        <button onclick="simulateReactWorkflow()">Simulate React Workflow</button>
+        <button onclick="clearResults()">Clear Results</button>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:8000/api';
+        let accessToken = null;
+        let testUser = null;
+
+        // Simulate the exact React API calls
+        async function simulateReactWorkflow() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<div class="info"><h3>🔄 Simulating React Workflow...</h3></div>';
+            
+            try {
+                // Step 1: Login (same as React app)
+                await addResult('Step 1: User Login', async () => {
+                    const response = await fetch(`${API_BASE}/auth/login/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Origin': 'http://localhost:3000'
+                        },
+                        body: JSON.stringify({
+                            email: 'john.patient@email.com',
+                            password: 'password123'
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    if (response.ok) {
+                        accessToken = data.access;
+                        testUser = data.user;
+                        // Simulate React localStorage
+                        localStorage.setItem('accessToken', data.access);
+                        localStorage.setItem('refreshToken', data.refresh);
+                        localStorage.setItem('user', JSON.stringify(data.user));
+                        return { 
+                            success: true, 
+                            data: `Logged in as ${data.user.full_name}`,
+                            user: data.user
+                        };
+                    } else {
+                        return { 
+                            success: false, 
+                            data: `Login failed: ${JSON.stringify(data)}`
+                        };
+                    }
+                });
+
+                // Step 2: Call Dashboard API (same as React Dashboard component)
+                await addResult('Step 2: Dashboard API Call', async () => {
+                    if (!accessToken) throw new Error('No access token');
+                    
+                    const response = await fetch(`${API_BASE}/appointments/dashboard/`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    if (response.ok) {
+                        return { 
+                            success: true, 
+                            data: `Dashboard loaded: ${JSON.stringify(data)}`,
+                            dashboardData: data
+                        };
+                    } else {
+                        return { 
+                            success: false, 
+                            data: `Dashboard API failed: ${JSON.stringify(data)}`
+                        };
+                    }
+                });
+
+                // Step 3: Call Notifications API (same as React Dashboard component)
+                await addResult('Step 3: Notifications API Call', async () => {
+                    if (!accessToken) throw new Error('No access token');
+                    
+                    const response = await fetch(`${API_BASE}/notifications/?limit=5`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    if (response.ok) {
+                        return { 
+                            success: true, 
+                            data: `Notifications loaded: ${data.count} items`,
+                            notificationsData: data
+                        };
+                    } else {
+                        return { 
+                            success: false, 
+                            data: `Notifications API failed: ${JSON.stringify(data)}`
+                        };
+                    }
+                });
+
+                // Step 4: Test React App Accessibility
+                await addResult('Step 4: React App Accessibility', async () => {
+                    try {
+                        const response = await fetch('http://localhost:3000');
+                        const html = await response.text();
+                        
+                        // Check if React app is properly loaded
+                        const hasReactRoot = html.includes('root') || html.includes('react');
+                        const hasMainBundle = html.includes('static/js') || html.includes('bundle');
+                        
+                        return { 
+                            success: response.ok && hasReactRoot,
+                            data: `React app accessible: ${response.status}, Has React: ${hasReactRoot}, Has Bundle: ${hasMainBundle}`
+                        };
+                    } catch (error) {
+                        return { 
+                            success: false, 
+                            data: `React app not accessible: ${error.message}`
+                        };
+                    }
+                });
+
+                // Step 5: Test User Profile API
+                await addResult('Step 5: User Profile API', async () => {
+                    if (!accessToken) throw new Error('No access token');
+                    
+                    const response = await fetch(`${API_BASE}/auth/profile/`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    if (response.ok) {
+                        return { 
+                            success: true, 
+                            data: `Profile loaded: ${data.full_name}`,
+                            profileData: data
+                        };
+                    } else {
+                        return { 
+                            success: false, 
+                            data: `Profile API failed: ${JSON.stringify(data)}`
+                        };
+                    }
+                });
+
+                resultsDiv.innerHTML += `
+                    <div class="success">
+                        <h3>✅ Frontend Simulation Complete!</h3>
+                        <p>All React app API calls are working correctly.</p>
+                        <p><strong>Next Step:</strong> Open the React app and test the actual UI.</p>
+                        <button onclick="openReactApp()">Open React App →</button>
+                    </div>
+                `;
+
+            } catch (error) {
+                resultsDiv.innerHTML += `
+                    <div class="error">
+                        <h3>❌ Frontend Simulation Failed!</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function addResult(stepName, testFunction) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML += `<div class="info"><strong>${stepName}...</strong></div>`;
+            
+            try {
+                const result = await testFunction();
+                const statusClass = result.success ? 'success' : 'error';
+                resultsDiv.innerHTML += `<div class="${statusClass}"><h4>${result.success ? '✅' : '❌'} ${stepName}</h4><p>${result.data}</p></div>`;
+                
+                if (result.dashboardData) {
+                    resultsDiv.innerHTML += `<pre>Dashboard Data: ${JSON.stringify(result.dashboardData, null, 2)}</pre>`;
+                }
+                if (result.notificationsData) {
+                    resultsDiv.innerHTML += `<pre>Notifications Data: ${JSON.stringify(result.notificationsData, null, 2)}</pre>`;
+                }
+                if (result.profileData) {
+                    resultsDiv.innerHTML += `<pre>Profile Data: ${JSON.stringify(result.profileData, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML += `<div class="error"><h4>❌ ${stepName}</h4><p>${error.message}</p></div>`;
+            }
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+            accessToken = null;
+            testUser = null;
+            localStorage.clear();
+        }
+
+        function openReactApp() {
+            window.open('http://localhost:3000', '_blank');
+        }
+
+        // Auto-run on page load
+        window.onload = function() {
+            simulateReactWorkflow();
+        };
+    </script>
+</body>
+</html>

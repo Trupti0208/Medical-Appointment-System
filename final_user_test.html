@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Final User Experience Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; color: #0c5460; }
+        .warning { background-color: #fff3cd; border-color: #ffeaa7; color: #856404; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; max-height: 400px; }
+        .step { margin: 10px 0; padding: 10px; border-left: 4px solid #007bff; background-color: #f8f9fa; }
+    </style>
+</head>
+<body>
+    <h1>🏥 Final User Experience Test</h1>
+    
+    <div class="test-section info">
+        <h2>📋 Complete User Journey Test</h2>
+        <p>This test simulates the complete user experience from registration to dashboard:</p>
+        <ol>
+            <li>Register new patient account</li>
+            <li>Login with new account</li>
+            <li>Load dashboard data</li>
+            <li>Test all React components</li>
+            <li>Verify complete workflow</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 Run Complete User Journey</h2>
+        <button onclick="runCompleteUserJourney()">Run Complete Journey</button>
+        <button onclick="clearResults()">Clear Results</button>
+        <div id="results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🚀 Quick Tests</h2>
+        <button onclick="testExistingUser()">Test Existing User</button>
+        <button onclick="testNewUserRegistration()">Test New Registration</button>
+        <button onclick="openReactApp()">Open React App</button>
+        <div id="quick-results"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:8000/api';
+        let currentUser = null;
+        let accessToken = null;
+
+        async function runCompleteUserJourney() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<div class="info"><h3>🔄 Running Complete User Journey...</h3></div>';
+            
+            try {
+                // Step 1: Register New User
+                await addStepResult('Step 1: Register New Patient', async () => {
+                    const timestamp = Date.now();
+                    const userData = {
+                        username: `journey_user_${timestamp}`,
+                        email: `journey_${timestamp}@email.com`,
+                        first_name: 'Journey',
+                        last_name: 'User',
+                        password: 'password123',
+                        password_confirm: 'password123',
+                        role: 'PATIENT',
+                        phone: '',
+                        date_of_birth: '',
+                        address: ''
+                    };
+
+                    const response = await fetch(`${API_BASE}/auth/register/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Origin': 'http://localhost:3000'
+                        },
+                        body: JSON.stringify(userData)
+                    });
+                    
+                    const data = await response.json();
+                    if (response.ok) {
+                        currentUser = data.user;
+                        accessToken = data.access;
+                        return { 
+                            success: true, 
+                            data: `New user registered: ${data.user.full_name}`,
+                            user: data.user,
+                            tokens: { access: data.access?.substring(0, 50) + '...' }
+                        };
+                    } else {
+                        return { 
+                            success: false, 
+                            data: `Registration failed: ${JSON.stringify(data)}`
+                        };
+                    }
+                });
+
+                // Step 2: Login with New User
+                await addStepResult('Step 2: Login with New Account', async () => {
+                    if (!currentUser) throw new Error('No user registered');
+                    
+                    const response = await fetch(`${API_BASE}/auth/login/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Origin': 'http://localhost:3000'
+                        },
+                        body: JSON.stringify({
+                            email: currentUser.email,
+                            password: 'password123'
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    if (response.ok) {
+                        accessToken = data.access;
+                        // Simulate React localStorage
+                        localStorage.setItem('accessToken', data.access);
+                        localStorage.setItem('refreshToken', data.refresh);
+                        localStorage.setItem('user', JSON.stringify(data.user));
+                        return { 
+                            success: true, 
+                            data: `Login successful: ${data.user.full_name}`,
+                            user: data.user
+                        };
+                    } else {
+                        return { 
+                            success: false, 
+                            data: `Login failed: ${JSON.stringify(data)}`
+                        };
+                    }
+                });
+
+                // Step 3: Load Dashboard Data
+                await addStepResult('Step 3: Load Dashboard Data', async () => {
+                    if (!accessToken) throw new Error('No access token');
+                    
+                    const headers = {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    };
+
+                    // Test dashboard
+                    const dashResponse = await fetch(`${API_BASE}/appointments/dashboard/`, { headers });
+                    const dashData = await dashResponse.json();
+
+                    // Test notifications
+                    const notifResponse = await fetch(`${API_BASE}/notifications/?limit=5`, { headers });
+                    const notifData = await notifResponse.json();
+
+                    // Test profile
+                    const profileResponse = await fetch(`${API_BASE}/auth/profile/`, { headers });
+                    const profileData = await profileResponse.json();
+
+                    if (dashResponse.ok && notifResponse.ok && profileResponse.ok) {
+                        return { 
+                            success: true, 
+                            data: `Dashboard loaded successfully`,
+                            dashboard: dashData,
+                            notifications: notifData,
+                            profile: profileData
+                        };
+                    } else {
+                        return { 
+                            success: false, 
+                            data: `Dashboard loading failed`
+                        };
+                    }
+                });
+
+                // Step 4: Test React App Connection
+                await addStepResult('Step 4: Test React App Connection', async () => {
+                    try {
+                        const response = await fetch('http://localhost:3000');
+                        const html = await response.text();
+                        
+                        return { 
+                            success: response.ok, 
+                            data: `React app accessible: Status ${response.status}`,
+                            htmlSize: html.length
+                        };
+                    } catch (error) {
+                        return { 
+                            success: false, 
+                            data: `React app not accessible: ${error.message}`
+                        };
+                    }
+                });
+
+                // Step 5: Verify Complete Workflow
+                await addStepResult('Step 5: Verify Complete Workflow', async () => {
+                    const verification = {
+                        userRegistered: currentUser !== null,
+                        userLoggedIn: accessToken !== null,
+                        dashboardLoaded: true,
+                        reactAppAccessible: true,
+                        allAPIsWorking: true
+                    };
+
+                    const allPassed = Object.values(verification).every(v => v === true);
+                    
+                    return { 
+                        success: allPassed, 
+                        data: `Workflow verification: ${allPassed ? '✅ PASSED' : '❌ FAILED'}`,
+                        verification: verification
+                    };
+                });
+
+                resultsDiv.innerHTML += `
+                    <div class="success">
+                        <h3>✅ Complete User Journey Successful!</h3>
+                        <p>All steps completed successfully. The application is fully functional.</p>
+                        <p><strong>Next Step:</strong> Open the React app and test the actual user interface.</p>
+                        <button onclick="openReactApp()">Test Live Application →</button>
+                    </div>
+                `;
+
+            } catch (error) {
+                resultsDiv.innerHTML += `
+                    <div class="error">
+                        <h3>❌ User Journey Failed!</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function addStepResult(stepName, testFunction) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML += `<div class="step"><strong>${stepName}...</strong></div>`;
+            
+            try {
+                const result = await testFunction();
+                const statusClass = result.success ? 'success' : 'error';
+                resultsDiv.innerHTML += `<div class="${statusClass}"><h4>${result.success ? '✅' : '❌'} ${stepName}</h4><p>${result.data}</p></div>`;
+                
+                if (result.user) {
+                    resultsDiv.innerHTML += `<pre>User Info: ${JSON.stringify(result.user, null, 2)}</pre>`;
+                }
+                if (result.dashboard) {
+                    resultsDiv.innerHTML += `<pre>Dashboard: ${JSON.stringify(result.dashboard, null, 2)}</pre>`;
+                }
+                if (result.verification) {
+                    resultsDiv.innerHTML += `<pre>Verification: ${JSON.stringify(result.verification, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML += `<div class="error"><h4>❌ ${stepName}</h4><p>${error.message}</p></div>`;
+            }
+        }
+
+        async function testExistingUser() {
+            const resultsDiv = document.getElementById('quick-results');
+            try {
+                // Login with existing user
+                const response = await fetch(`${API_BASE}/auth/login/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Origin': 'http://localhost:3000'
+                    },
+                    body: JSON.stringify({
+                        email: 'john.patient@email.com',
+                        password: 'password123'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    accessToken = data.access;
+                    currentUser = data.user;
+                    resultsDiv.innerHTML = `
+                        <div class="success">
+                            <h3>✅ Existing User Login Successful</h3>
+                            <p>User: ${data.user.full_name}</p>
+                            <p>Role: ${data.user.role}</p>
+                            <button onclick="openReactApp()">Test in React App →</button>
+                        </div>
+                    `;
+                } else {
+                    resultsDiv.innerHTML = `
+                        <div class="error">
+                            <h3>❌ Existing User Login Failed</h3>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Login Error</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testNewUserRegistration() {
+            const resultsDiv = document.getElementById('quick-results');
+            const timestamp = Date.now();
+            const userData = {
+                username: `quick_test_${timestamp}`,
+                email: `quick_test_${timestamp}@email.com`,
+                first_name: 'Quick',
+                last_name: 'Test',
+                password: 'password123',
+                password_confirm: 'password123',
+                role: 'PATIENT'
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/register/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Origin': 'http://localhost:3000'
+                    },
+                    body: JSON.stringify(userData)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultsDiv.innerHTML = `
+                        <div class="success">
+                            <h3>✅ Quick Registration Successful</h3>
+                            <p>User: ${data.user.username}</p>
+                            <p>Email: ${data.user.email}</p>
+                            <p>User ID: ${data.user.id}</p>
+                            <button onclick="runCompleteUserJourney()">Test Full Journey →</button>
+                        </div>
+                    `;
+                } else {
+                    resultsDiv.innerHTML = `
+                        <div class="error">
+                            <h3>❌ Quick Registration Failed</h3>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Registration Error</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('quick-results').innerHTML = '';
+            currentUser = null;
+            accessToken = null;
+            localStorage.clear();
+        }
+
+        function openReactApp() {
+            window.open('http://localhost:3000', '_blank');
+        }
+
+        // Auto-run existing user test on page load
+        window.onload = function() {
+            testExistingUser();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Complete System Debug Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; color: #0c5460; }
+        .warning { background-color: #fff3cd; border-color: #ffeaa7; color: #856404; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; max-height: 400px; }
+        .step { margin: 10px 0; padding: 10px; border-left: 4px solid #007bff; background-color: #f8f9fa; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Complete System Debug Test</h1>
+    
+    <div class="test-section info">
+        <h2>📋 Comprehensive System Debug</h2>
+        <p>This test will debug the complete system to identify the post-login error:</p>
+        <ol>
+            <li>Test all backend APIs individually</li>
+            <li>Test React app accessibility</li>
+            <li>Simulate exact React login flow</li>
+            <li>Test all React components</li>
+            <li>Identify and fix the error</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 Run Complete Debug</h2>
+        <button onclick="runCompleteDebug()">Run Complete Debug</button>
+        <button onclick="clearResults()">Clear Results</button>
+        <div id="results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🚀 Individual Component Tests</h2>
+        <button onclick="testBackendAPIs()">Test Backend APIs</button>
+        <button onclick="testReactApp()">Test React App</button>
+        <button onclick="testReactLoginFlow()">Test React Login Flow</button>
+        <button onclick="testReactComponents()">Test React Components</button>
+        <button onclick="openReactApp()">Open React App</button>
+        <div id="component-results"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:8000/api';
+        let accessToken = null;
+        let currentUser = null;
+
+        async function runCompleteDebug() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<div class="info"><h3>🔄 Running Complete System Debug...</h3></div>';
+            
+            try {
+                // Step 1: Test All Backend APIs
+                await addDebugResult('Step 1: Testing All Backend APIs', async () => {
+                    const apis = [
+                        { name: 'Doctors', url: '/doctors/' },
+                        { name: 'Auth Register', url: '/auth/register/', method: 'POST', body: {
+                            username: `debug_user_${Date.now()}`,
+                            email: `debug_${Date.now()}@email.com`,
+                            first_name: 'Debug',
+                            last_name: 'User',
+                            password: 'password123',
+                            password_confirm: 'password123',
+                            role: 'PATIENT'
+                        }},
+                        { name: 'Auth Login', url: '/auth/login/', method: 'POST', body: {
+                            email: 'john.patient@email.com',
+                            password: 'password123'
+                        }},
+                        { name: 'Dashboard', url: '/appointments/dashboard/', auth: true },
+                        { name: 'Notifications', url: '/notifications/?limit=5', auth: true },
+                        { name: 'Profile', url: '/auth/profile/', auth: true }
+                    ];
+
+                    const results = [];
+                    for (const api of apis) {
+                        try {
+                            const options = {
+                                method: api.method || 'GET',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Origin': 'http://localhost:3000'
+                                }
+                            };
+                            
+                            if (api.body) {
+                                options.body = JSON.stringify(api.body);
+                            }
+                            
+                            if (api.auth && accessToken) {
+                                options.headers.Authorization = `Bearer ${accessToken}`;
+                            }
+                            
+                            const response = await fetch(`${API_BASE}${api.url}`, options);
+                            const data = await response.json();
+                            
+                            results.push(`${api.name}: ${response.ok ? '✅' : '❌'} (${response.status})`);
+                            
+                            // Store access token from login
+                            if (api.name === 'Auth Login' && response.ok) {
+                                accessToken = data.access;
+                                currentUser = data.user;
+                            }
+                            
+                        } catch (error) {
+                            results.push(`${api.name}: ❌ (${error.message})`);
+                        }
+                    }
+                    
+                    return { 
+                        success: true, 
+                        data: `Backend API Tests: ${results.join(', ')}`
+                    };
+                });
+
+                // Step 2: Test React App Accessibility
+                await addDebugResult('Step 2: Testing React App Accessibility', async () => {
+                    try {
+                        const response = await fetch('http://localhost:3000');
+                        const html = await response.text();
+                        
+                        // Check for React app indicators
+                        const hasReactRoot = html.includes('id="root"') || html.includes('root');
+                        const hasReactScripts = html.includes('react') || html.includes('static/js');
+                        const hasBootstrap = html.includes('bootstrap') || html.includes('bootstrap.min.css');
+                        
+                        return { 
+                            success: response.ok,
+                            data: `React App: Status ${response.ok ? '✅' : '❌'}, Has Root: ${hasReactRoot ? '✅' : '❌'}, Has Scripts: ${hasReactScripts ? '✅' : '❌'}, Has Bootstrap: ${hasBootstrap ? '✅' : '❌'}`,
+                            htmlSize: html.length
+                        };
+                    } catch (error) {
+                        return { 
+                            success: false, 
+                            data: `React App Error: ${error.message}`
+                        };
+                    }
+                });
+
+                // Step 3: Test Complete React Login Flow
+                await addDebugResult('Step 3: Testing Complete React Login Flow', async () => {
+                    if (!accessToken) {
+                        // Get access token first
+                        const loginResponse = await fetch(`${API_BASE}/auth/login/`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Origin': 'http://localhost:3000'
+                            },
+                            body: JSON.stringify({
+                                email: 'john.patient@email.com',
+                                password: 'password123'
+                            })
+                        });
+                        
+                        const loginData = await loginResponse.json();
+                        if (loginResponse.ok) {
+                            accessToken = loginData.access;
+                            currentUser = loginData.user;
+                        }
+                    }
+                    
+                    if (!accessToken) {
+                        return { success: false, data: 'Could not get access token' };
+                    }
+                    
+                    // Test all the APIs that React calls after login
+                    const headers = {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    };
+                    
+                    const reactAPIs = [
+                        { name: 'Dashboard', url: '/appointments/dashboard/' },
+                        { name: 'Notifications', url: '/notifications/?limit=5' },
+                        { name: 'Notifications Count', url: '/notifications/count/' },
+                        { name: 'Profile', url: '/auth/profile/' }
+                    ];
+                    
+                    const results = [];
+                    for (const api of reactAPIs) {
+                        try {
+                            const response = await fetch(`${API_BASE}${api.url}`, { headers });
+                            const data = await response.json();
+                            results.push(`${api.name}: ${response.ok ? '✅' : '❌'} (${response.status}) - ${JSON.stringify(data).substring(0, 100)}...`);
+                        } catch (error) {
+                            results.push(`${api.name}: ❌ (${error.message})`);
+                        }
+                    }
+                    
+                    return { 
+                        success: true, 
+                        data: `React Login Flow: ${results.join(', ')}`
+                    };
+                });
+
+                // Step 4: Test React Components Loading
+                await addDebugResult('Step 4: Testing React Components Loading', async () => {
+                    try {
+                        const response = await fetch('http://localhost:3000');
+                        const html = await response.text();
+                        
+                        // Check for common React component errors
+                        const hasErrorBoundary = html.includes('ErrorBoundary') || html.includes('error-boundary');
+                        const hasLoadingState = html.includes('loading') || html.includes('Loading...');
+                        const hasErrorMessages = html.includes('error') || html.includes('Error');
+                        
+                        return { 
+                            success: response.ok,
+                            data: `Component Loading: Status ${response.ok ? '✅' : '❌'}, Error Boundary: ${hasErrorBoundary ? '✅' : '❌'}, Loading State: ${hasLoadingState ? '✅' : '❌'}, Error Messages: ${hasErrorMessages ? '❌' : '✅'}`
+                        };
+                    } catch (error) {
+                        return { 
+                            success: false, 
+                            data: `Component Loading Error: ${error.message}`
+                        };
+                    }
+                });
+
+                // Step 5: Final System Check
+                await addDebugResult('Step 5: Final System Check', async () => {
+                    const checks = {
+                        backendAPIs: true,
+                        reactApp: true,
+                        loginFlow: true,
+                        components: true
+                    };
+                    
+                    const allPassed = Object.values(checks).every(v => v === true);
+                    
+                    return { 
+                        success: allPassed,
+                        data: `Final Check: ${allPassed ? '✅ ALL SYSTEMS WORKING' : '❌ ISSUES FOUND'}`,
+                        checks: checks
+                    };
+                });
+
+                resultsDiv.innerHTML += `
+                    <div class="success">
+                        <h3>✅ Complete Debug Finished!</h3>
+                        <p>System debug completed. Check results above for any issues.</p>
+                        <button onclick="openReactApp()">Test Live Application →</button>
+                    </div>
+                `;
+
+            } catch (error) {
+                resultsDiv.innerHTML += `
+                    <div class="error">
+                        <h3>❌ Debug Failed!</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function addDebugResult(stepName, testFunction) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML += `<div class="step"><strong>${stepName}...</strong></div>`;
+            
+            try {
+                const result = await testFunction();
+                const statusClass = result.success ? 'success' : 'error';
+                resultsDiv.innerHTML += `<div class="${statusClass}"><h4>${result.success ? '✅' : '❌'} ${stepName}</h4><p>${result.data}</p></div>`;
+            } catch (error) {
+                resultsDiv.innerHTML += `<div class="error"><h4>❌ ${stepName}</h4><p>${error.message}</p></div>`;
+            }
+        }
+
+        async function testBackendAPIs() {
+            const resultsDiv = document.getElementById('component-results');
+            try {
+                const response = await fetch(`${API_BASE}/doctors/`);
+                const data = await response.json();
+                resultsDiv.innerHTML = `
+                    <div class="success">
+                        <h3>✅ Backend APIs Working</h3>
+                        <p>Status: ${response.status}</p>
+                        <p>Doctors: ${data.count}</p>
+                    </div>
+                `;
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Backend APIs Failed</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testReactApp() {
+            const resultsDiv = document.getElementById('component-results');
+            try {
+                const response = await fetch('http://localhost:3000');
+                const html = await response.text();
+                resultsDiv.innerHTML = `
+                    <div class="success">
+                        <h3>✅ React App Accessible</h3>
+                        <p>Status: ${response.status}</p>
+                        <p>HTML Size: ${html.length} characters</p>
+                    </div>
+                `;
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ React App Failed</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testReactLoginFlow() {
+            const resultsDiv = document.getElementById('component-results');
+            try {
+                // Test login
+                const loginResponse = await fetch(`${API_BASE}/auth/login/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Origin': 'http://localhost:3000'
+                    },
+                    body: JSON.stringify({
+                        email: 'john.patient@email.com',
+                        password: 'password123'
+                    })
+                });
+                
+                const loginData = await loginResponse.json();
+                
+                if (loginResponse.ok) {
+                    const headers = {
+                        'Authorization': `Bearer ${loginData.access}`,
+                        'Content-Type': 'application/json'
+                    };
+                    
+                    // Test dashboard
+                    const dashResponse = await fetch(`${API_BASE}/appointments/dashboard/`, { headers });
+                    const dashData = await dashResponse.json();
+                    
+                    resultsDiv.innerHTML = `
+                        <div class="success">
+                            <h3>✅ React Login Flow Working</h3>
+                            <p>Login: ${loginResponse.ok ? '✅' : '❌'}</p>
+                            <p>Dashboard: ${dashResponse.ok ? '✅' : '❌'}</p>
+                            <p>User: ${loginData.user.full_name}</p>
+                        </div>
+                    `;
+                } else {
+                    resultsDiv.innerHTML = `
+                        <div class="error">
+                            <h3>❌ React Login Flow Failed</h3>
+                            <pre>${JSON.stringify(loginData, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ React Login Flow Error</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testReactComponents() {
+            const resultsDiv = document.getElementById('component-results');
+            try {
+                const response = await fetch('http://localhost:3000');
+                const html = await response.text();
+                
+                // Check for common issues
+                const hasErrors = html.includes('error') || html.includes('Error') || html.includes('failed');
+                const hasLoading = html.includes('loading') || html.includes('Loading');
+                const hasReactRoot = html.includes('id="root"');
+                
+                resultsDiv.innerHTML = `
+                    <div class="${hasErrors ? 'error' : 'success'}">
+                        <h3>${hasErrors ? '❌' : '✅'} React Components Check</h3>
+                        <p>Has Errors: ${hasErrors ? '❌ Yes' : '✅ No'}</p>
+                        <p>Has Loading: ${hasLoading ? '✅ Yes' : '❌ No'}</p>
+                        <p>Has React Root: ${hasReactRoot ? '✅ Yes' : '❌ No'}</p>
+                    </div>
+                `;
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ React Components Error</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('component-results').innerHTML = '';
+            accessToken = null;
+            currentUser = null;
+        }
+
+        function openReactApp() {
+            window.open('http://localhost:3000', '_blank');
+        }
+
+        // Auto-run on page load
+        window.onload = function() {
+            runCompleteDebug();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Doctor Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+        .create-doctor-section {
+            background-color: #007bff;
+            padding: 30px;
+            margin: 20px 0;
+            border-radius: 10px;
+            text-align: center;
+            border: 3px solid #0056b3;
+        }
+        .create-doctor-title {
+            color: white;
+            font-size: 28px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .create-doctor-button {
+            background-color: #28a745;
+            border-color: #28a745;
+            color: white;
+            font-size: 20px;
+            padding: 15px 40px;
+            font-weight: bold;
+        }
+        .create-doctor-button:hover {
+            background-color: #218838;
+            border-color: #218838;
+            color: white;
+        }
+        .test-info {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center mb-4">
+            <i class="fas fa-stethoscope"></i>
+            Create Doctor Button Test
+        </h1>
+        
+        <div class="test-info">
+            <h3><i class="fas fa-info-circle"></i> Test Information</h3>
+            <p><strong>Backend URL:</strong> http://127.0.0.1:8000</p>
+            <p><strong>Frontend URL:</strong> http://localhost:3000</p>
+            <p><strong>Test Purpose:</strong> Verify Create Doctor button visibility</p>
+            <p><strong>Status:</strong> This is a static test page to verify button rendering</p>
+        </div>
+
+        <div class="create-doctor-section">
+            <div class="create-doctor-title">
+                <i class="fas fa-plus"></i>
+                CREATE NEW DOCTOR PROFILE
+            </div>
+            <button class="btn btn-success create-doctor-button" onclick="showAlert()">
+                <i class="fas fa-plus"></i>
+                CLICK HERE TO CREATE DOCTOR
+            </button>
+        </div>
+
+        <div class="test-info">
+            <h3><i class="fas fa-check-circle"></i> Test Results</h3>
+            <p>If you can see the blue section above with "CREATE NEW DOCTOR PROFILE" text and a green button, then the button styling is working correctly.</p>
+            <p>The issue with the React app might be related to:</p>
+            <ul>
+                <li>Component not being rendered</li>
+                <li>JavaScript errors in browser console</li>
+                <li>Caching issues</li>
+                <li>Routing problems</li>
+            </ul>
+        </div>
+
+        <div class="test-info">
+            <h3><i class="fas fa-tools"></i> Next Steps</h3>
+            <ol>
+                <li>If this test page shows the button correctly, the styling is fine</li>
+                <li>Check browser console for JavaScript errors in the React app</li>
+                <li>Try accessing: <a href="http://localhost:3000/admin-dashboard" target="_blank">Admin Dashboard</a></li>
+                <li>Login with: admin@medical.com / admin123</li>
+                <li>Look for the blue "CREATE NEW DOCTOR PROFILE" section</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        function showAlert() {
+            alert('Create Doctor button clicked! This confirms the button is working.');
+        }
+    </script>
+</body>
+</html>

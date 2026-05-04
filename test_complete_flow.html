@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Complete Medical System Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🏥 Medical Appointment System - Complete Test</h1>
+    
+    <div class="test-section">
+        <h2>Step 1: Test Backend Connection</h2>
+        <button onclick="testBackend()">Test Backend API</button>
+        <div id="backend-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Step 2: Test Login Functionality</h2>
+        <button onclick="testLogin()">Test Patient Login</button>
+        <div id="login-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Step 3: Test Doctors API</h2>
+        <button onclick="testDoctors()">Test Doctors List</button>
+        <div id="doctors-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Step 4: Test Frontend Access</h2>
+        <button onclick="openFrontend()">Open React Frontend</button>
+        <div id="frontend-result">
+            <p><strong>Manual Test:</strong> Click the button above to open the React application in a new tab.</p>
+            <p>Then try logging in with:</p>
+            <ul>
+                <li>Email: john.patient@email.com</li>
+                <li>Password: password123</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:8000/api';
+
+        async function testBackend() {
+            const resultDiv = document.getElementById('backend-result');
+            try {
+                const response = await fetch(`${API_BASE}/doctors/`);
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        <h3>✅ Backend Connection Successful!</h3>
+                        <p>Status: ${response.status}</p>
+                        <p>Found ${data.count} doctors in the system</p>
+                        <button onclick="testLogin()">Continue to Login Test →</button>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Backend Connection Failed!</h3>
+                        <p>Error: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testLogin() {
+            const resultDiv = document.getElementById('login-result');
+            try {
+                const response = await fetch(`${API_BASE}/auth/login/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: 'john.patient@email.com',
+                        password: 'password123'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h3>✅ Login Successful!</h3>
+                            <p>Welcome: ${data.user.full_name}</p>
+                            <p>Role: ${data.user.role}</p>
+                            <p>User ID: ${data.user.id}</p>
+                            <p>Access Token: ${data.access.substring(0, 50)}...</p>
+                            <button onclick="testDoctors()">Continue to Doctors Test →</button>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h3>❌ Login Failed!</h3>
+                            <p>Error: ${data.message || 'Unknown error'}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Login Error!</h3>
+                        <p>Error: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testDoctors() {
+            const resultDiv = document.getElementById('doctors-result');
+            try {
+                const response = await fetch(`${API_BASE}/doctors/`);
+                const data = await response.json();
+                
+                let doctorsHtml = '<h3>✅ Available Doctors:</h3>';
+                data.results.forEach(doctor => {
+                    doctorsHtml += `
+                        <div style="margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 3px;">
+                            <strong>${doctor.name}</strong><br>
+                            Specialization: ${doctor.specialization}<br>
+                            Experience: ${doctor.experience_years} years<br>
+                            Consultation Fee: $${doctor.consultation_fee}<br>
+                            Clinic: ${doctor.clinic_name}<br>
+                            Available: ${doctor.is_available ? '✅ Yes' : '❌ No'}
+                        </div>
+                    `;
+                });
+                
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        ${doctorsHtml}
+                        <button onclick="openFrontend()">Test React Frontend →</button>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Doctors API Error!</h3>
+                        <p>Error: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function openFrontend() {
+            const resultDiv = document.getElementById('frontend-result');
+            window.open('http://localhost:3000', '_blank');
+            resultDiv.innerHTML = `
+                <div class="success">
+                    <h3>✅ Frontend Opened!</h3>
+                    <p>React application should open in a new tab.</p>
+                    <p><strong>Login Credentials:</strong></p>
+                    <ul>
+                        <li>Email: john.patient@email.com</li>
+                        <li>Password: password123</li>
+                    </ul>
+                    <p><strong>Expected Flow:</strong></p>
+                    <ol>
+                        <li>Login with credentials above</li>
+                        <li>See patient dashboard</li>
+                        <li>Browse doctors</li>
+                        <li>Book appointment</li>
+                    </ol>
+                </div>
+            `;
+        }
+
+        // Auto-run the first test when page loads
+        window.onload = function() {
+            testBackend();
+        };
+    </script>
+</body>
+</html>

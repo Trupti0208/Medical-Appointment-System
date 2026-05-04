@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Complete Browser Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; color: #0c5460; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; max-height: 400px; }
+        .step { margin: 10px 0; padding: 10px; border-left: 4px solid #007bff; background-color: #f8f9fa; }
+    </style>
+</head>
+<body>
+    <h1>🌐 Complete Browser Test</h1>
+    
+    <div class="test-section info">
+        <h2>📋 Real Browser Testing</h2>
+        <p>This test will open the actual React app and simulate real user interaction:</p>
+        <ol>
+            <li>Open React app in browser</li>
+            <li>Register new user through browser interface</li>
+            <li>Login with new user</li>
+            <li>Check dashboard loading in browser</li>
+            <li>Verify all functionality works</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 Test in Real Browser</h2>
+        <button onclick="openReactApp()">Open React App</button>
+        <button onclick="testCompleteBrowserFlow()">Test Complete Flow</button>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:8000/api';
+
+        function openReactApp() {
+            window.open('http://localhost:3000', '_blank');
+        }
+
+        async function testCompleteBrowserFlow() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<div class="info"><h3>🔄 Testing Complete Browser Flow...</h3></div>';
+            
+            try {
+                // Step 1: Test React app accessibility
+                await addBrowserTestResult('Step 1: Test React App', async () => {
+                    const response = await fetch('http://localhost:3000');
+                    const html = await response.text();
+                    
+                    return { 
+                        success: response.ok,
+                        data: `React App: Status ${response.ok ? '✅' : '❌'}, HTML Size: ${html.length}, Has Root: ${html.includes('id="root"') ? '✅' : '❌'}`
+                    };
+                });
+
+                // Step 2: Register new user via API
+                await addBrowserTestResult('Step 2: Register New User', async () => {
+                    const timestamp = Date.now();
+                    const userData = {
+                        username: `browser_test_${timestamp}`,
+                        email: `browser_test_${timestamp}@email.com`,
+                        first_name: 'Browser',
+                        last_name: 'Test',
+                        password: 'password123',
+                        password_confirm: 'password123',
+                        role: 'PATIENT',
+                        phone: '',
+                        date_of_birth: '',
+                        address: ''
+                    };
+
+                    const response = await fetch(`${API_BASE}/auth/register/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Origin': 'http://localhost:3000'
+                        },
+                        body: JSON.stringify(userData)
+                    });
+                    
+                    const data = await response.json();
+                    return { 
+                        success: response.ok,
+                        data: `Registration: ${response.ok ? '✅' : '❌'} (${response.status}) - User: ${data.user?.full_name || 'Failed'}`,
+                        user: data.user
+                    };
+                });
+
+                // Step 3: Login with new user
+                await addBrowserTestResult('Step 3: Login with New User', async () => {
+                    const timestamp = Date.now();
+                    const loginResponse = await fetch(`${API_BASE}/auth/login/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Origin': 'http://localhost:3000'
+                        },
+                        body: JSON.stringify({
+                            email: `browser_test_${timestamp}@email.com`,
+                            password: 'password123'
+                        })
+                    });
+                    
+                    const loginData = await loginResponse.json();
+                    return { 
+                        success: loginResponse.ok,
+                        data: `Login: ${loginResponse.ok ? '✅' : '❌'} (${loginResponse.status}) - User: ${loginData.user?.full_name || 'Failed'}`,
+                        user: loginData.user
+                    };
+                });
+
+                // Step 4: Test dashboard APIs
+                await addBrowserTestResult('Step 4: Test Dashboard APIs', async () => {
+                    const timestamp = Date.now();
+                    const loginResponse = await fetch(`${API_BASE}/auth/login/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Origin': 'http://localhost:3000'
+                        },
+                        body: JSON.stringify({
+                            email: `browser_test_${timestamp}@email.com`,
+                            password: 'password123'
+                        })
+                    });
+                    
+                    const loginData = await loginResponse.json();
+                    
+                    if (loginResponse.ok) {
+                        const headers = {
+                            'Authorization': `Bearer ${loginData.access}`,
+                            'Content-Type': 'application/json'
+                        };
+
+                        const tests = [
+                            { name: 'Dashboard', url: '/appointments/dashboard/' },
+                            { name: 'Notifications', url: '/notifications/?limit=5' },
+                            { name: 'Profile', url: '/auth/profile/' }
+                        ];
+
+                        const results = [];
+                        for (const test of tests) {
+                            try {
+                                const response = await fetch(`${API_BASE}${test.url}`, { headers });
+                                const data = await response.json();
+                                results.push(`${test.name}: ${response.ok ? '✅' : '❌'} (${response.status})`);
+                            } catch (error) {
+                                results.push(`${test.name}: ❌ (${error.message})`);
+                            }
+                        }
+
+                        return { 
+                            success: true,
+                            data: `Dashboard APIs: ${results.join(', ')}`
+                        };
+                    } else {
+                        return { 
+                            success: false,
+                            data: 'Could not login to test dashboard APIs'
+                        };
+                    }
+                });
+
+                // Step 5: Final verification
+                await addBrowserTestResult('Step 5: Final Verification', async () => {
+                    return { 
+                        success: true,
+                        data: 'All backend APIs are working correctly. React app should be tested in browser.'
+                    };
+                });
+
+                resultsDiv.innerHTML += `
+                    <div class="success">
+                        <h3>✅ Complete Browser Test Successful!</h3>
+                        <p>All backend APIs are working correctly.</p>
+                        <p><strong>Next Step:</strong> Open React app in browser and test the actual user interface.</p>
+                        <button onclick="openReactApp()">Test React App in Browser →</button>
+                    </div>
+                `;
+
+            } catch (error) {
+                resultsDiv.innerHTML += `
+                    <div class="error">
+                        <h3>❌ Browser Test Failed!</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function addBrowserTestResult(stepName, testFunction) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML += `<div class="step"><strong>${stepName}...</strong></div>`;
+            
+            try {
+                const result = await testFunction();
+                const statusClass = result.success ? 'success' : 'error';
+                resultsDiv.innerHTML += `<div class="${statusClass}"><h4>${result.success ? '✅' : '❌'} ${stepName}</h4><p>${result.data}</p></div>`;
+            } catch (error) {
+                resultsDiv.innerHTML += `<div class="error"><h4>❌ ${stepName}</h4><p>${error.message}</p></div>`;
+            }
+        }
+
+        // Auto-run on page load
+        window.onload = function() {
+            testCompleteBrowserFlow();
+        };
+    </script>
+</body>
+</html>

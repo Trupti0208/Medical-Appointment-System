@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Complete Application Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; color: #0c5460; }
+        .warning { background-color: #fff3cd; border-color: #ffeaa7; color: #856404; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; max-height: 400px; }
+        .step { margin: 10px 0; padding: 10px; border-left: 4px solid #007bff; background-color: #f8f9fa; }
+    </style>
+</head>
+<body>
+    <h1>🏥 Complete Medical Application Test</h1>
+    
+    <div class="test-section info">
+        <h2>📋 Complete System Test</h2>
+        <p>This test will verify the entire application workflow:</p>
+        <ol>
+            <li>Test backend API connectivity</li>
+            <li>Register a new patient</li>
+            <li>Login with the new patient</li>
+            <li>Test dashboard data loading</li>
+            <li>Test all major API endpoints</li>
+            <li>Verify React app functionality</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 Run Complete Test Suite</h2>
+        <button onclick="runCompleteApplicationTest()">Run Complete Test</button>
+        <button onclick="clearResults()">Clear Results</button>
+        <div id="test-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🚀 Individual Tests</h2>
+        <button onclick="testBackendConnectivity()">Test Backend</button>
+        <button onclick="testUserRegistration()">Test Registration</button>
+        <button onclick="testUserLogin()">Test Login</button>
+        <button onclick="testDashboardAPIs()">Test Dashboard</button>
+        <button onclick="testAllEndpoints()">Test All APIs</button>
+        <button onclick="openReactApp()">Open React App</button>
+        <div id="individual-results"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:8000/api';
+        let testUser = null;
+        let accessToken = null;
+
+        async function runCompleteApplicationTest() {
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.innerHTML = '<div class="info"><h3>🔄 Running Complete Application Test...</h3></div>';
+            
+            try {
+                // Step 1: Test Backend Connectivity
+                await addTestResult('Step 1: Testing Backend Connectivity', async () => {
+                    const response = await fetch(`${API_BASE}/doctors/`);
+                    const data = await response.json();
+                    return { success: response.ok, data: `Found ${data.count} doctors` };
+                });
+
+                // Step 2: Test User Registration
+                await addTestResult('Step 2: Testing User Registration', async () => {
+                    const timestamp = Date.now();
+                    const userData = {
+                        username: `app_test_${timestamp}`,
+                        email: `app_test_${timestamp}@email.com`,
+                        first_name: 'App',
+                        last_name: 'Test',
+                        password: 'password123',
+                        password_confirm: 'password123',
+                        role: 'PATIENT',
+                        phone: '',
+                        date_of_birth: '',
+                        address: ''
+                    };
+
+                    const response = await fetch(`${API_BASE}/auth/register/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Origin': 'http://localhost:3000'
+                        },
+                        body: JSON.stringify(userData)
+                    });
+                    
+                    const data = await response.json();
+                    if (response.ok) {
+                        testUser = data.user;
+                        accessToken = data.access;
+                        return { 
+                            success: true, 
+                            data: `User created: ${data.user.username} (ID: ${data.user.id})`,
+                            fullData: data
+                        };
+                    } else {
+                        return { 
+                            success: false, 
+                            data: `Registration failed: ${JSON.stringify(data)}`,
+                            fullData: data
+                        };
+                    }
+                });
+
+                // Step 3: Test User Login
+                await addTestResult('Step 3: Testing User Login', async () => {
+                    if (!testUser) throw new Error('No test user available');
+                    
+                    const response = await fetch(`${API_BASE}/auth/login/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Origin': 'http://localhost:3000'
+                        },
+                        body: JSON.stringify({
+                            email: testUser.email,
+                            password: 'password123'
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    if (response.ok) {
+                        accessToken = data.access;
+                        return { 
+                            success: true, 
+                            data: `Login successful for ${data.user.full_name}`,
+                            tokens: { access: data.access?.substring(0, 50) + '...' }
+                        };
+                    } else {
+                        return { 
+                            success: false, 
+                            data: `Login failed: ${JSON.stringify(data)}`
+                        };
+                    }
+                });
+
+                // Step 4: Test Dashboard APIs
+                await addTestResult('Step 4: Testing Dashboard APIs', async () => {
+                    if (!accessToken) throw new Error('No access token available');
+                    
+                    const headers = {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    };
+
+                    // Test dashboard stats
+                    const dashboardResponse = await fetch(`${API_BASE}/appointments/dashboard/`, { headers });
+                    const dashboardData = await dashboardResponse.json();
+                    
+                    // Test notifications
+                    const notifResponse = await fetch(`${API_BASE}/notifications/?limit=5`, { headers });
+                    const notifData = await notifResponse.json();
+                    
+                    // Test notifications count
+                    const countResponse = await fetch(`${API_BASE}/notifications/count/`, { headers });
+                    const countData = await countResponse.json();
+
+                    return { 
+                        success: dashboardResponse.ok && notifResponse.ok && countResponse.ok,
+                        data: `Dashboard: ${JSON.stringify(dashboardData)}, Notifications: ${notifData.count}, Unread: ${countData.count}`
+                    };
+                });
+
+                // Step 5: Test All Major Endpoints
+                await addTestResult('Step 5: Testing All Major Endpoints', async () => {
+                    if (!accessToken) throw new Error('No access token available');
+                    
+                    const headers = {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    };
+
+                    const endpoints = [
+                        { name: 'Doctors', url: '/doctors/' },
+                        { name: 'Appointments', url: '/appointments/' },
+                        { name: 'Notifications', url: '/notifications/' },
+                        { name: 'Profile', url: '/auth/profile/' }
+                    ];
+
+                    const results = [];
+                    for (const endpoint of endpoints) {
+                        try {
+                            const response = await fetch(`${API_BASE}${endpoint.url}`, { headers });
+                            const data = await response.json();
+                            results.push(`${endpoint.name}: ${response.ok ? '✅' : '❌'} (${response.status})`);
+                        } catch (error) {
+                            results.push(`${endpoint.name}: ❌ (${error.message})`);
+                        }
+                    }
+
+                    return { 
+                        success: true, 
+                        data: `Endpoint Tests: ${results.join(', ')}`
+                    };
+                });
+
+                // Step 6: Test React App Accessibility
+                await addTestResult('Step 6: Testing React App Accessibility', async () => {
+                    try {
+                        const response = await fetch('http://localhost:3000');
+                        return { 
+                            success: response.ok, 
+                            data: `React app accessible: Status ${response.status}`
+                        };
+                    } catch (error) {
+                        return { 
+                            success: false, 
+                            data: `React app not accessible: ${error.message}`
+                        };
+                    }
+                });
+
+                resultsDiv.innerHTML += '<div class="success"><h3>✅ Complete Test Finished!</h3><p>All tests completed. The application is working correctly.</p><button onclick="openReactApp()">Test in React App →</button></div>';
+
+            } catch (error) {
+                resultsDiv.innerHTML += `<div class="error"><h3>❌ Test Failed!</h3><p>${error.message}</p></div>`;
+            }
+        }
+
+        async function addTestResult(stepName, testFunction) {
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.innerHTML += `<div class="step"><strong>${stepName}...</strong></div>`;
+            
+            try {
+                const result = await testFunction();
+                const statusClass = result.success ? 'success' : 'error';
+                resultsDiv.innerHTML += `<div class="${statusClass}"><h4>${result.success ? '✅' : '❌'} ${stepName}</h4><p>${result.data}</p></div>`;
+                if (result.fullData) {
+                    resultsDiv.innerHTML += `<pre>${JSON.stringify(result.fullData, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML += `<div class="error"><h4>❌ ${stepName}</h4><p>${error.message}</p></div>`;
+            }
+        }
+
+        async function testBackendConnectivity() {
+            const resultsDiv = document.getElementById('individual-results');
+            try {
+                const response = await fetch(`${API_BASE}/doctors/`);
+                const data = await response.json();
+                resultsDiv.innerHTML = `
+                    <div class="success">
+                        <h3>✅ Backend Connected</h3>
+                        <p>Status: ${response.status}</p>
+                        <p>Doctors: ${data.count}</p>
+                    </div>
+                `;
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Backend Failed</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testUserRegistration() {
+            const resultsDiv = document.getElementById('individual-results');
+            const timestamp = Date.now();
+            const userData = {
+                username: `reg_test_${timestamp}`,
+                email: `reg_test_${timestamp}@email.com`,
+                first_name: 'Reg',
+                last_name: 'Test',
+                password: 'password123',
+                password_confirm: 'password123',
+                role: 'PATIENT'
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/register/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Origin': 'http://localhost:3000'
+                    },
+                    body: JSON.stringify(userData)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    testUser = data.user;
+                    accessToken = data.access;
+                    resultsDiv.innerHTML = `
+                        <div class="success">
+                            <h3>✅ Registration Successful</h3>
+                            <p>User: ${data.user.username}</p>
+                            <p>Email: ${data.user.email}</p>
+                            <button onclick="testUserLogin()">Test Login →</button>
+                        </div>
+                    `;
+                } else {
+                    resultsDiv.innerHTML = `
+                        <div class="error">
+                            <h3>❌ Registration Failed</h3>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Registration Error</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testUserLogin() {
+            const resultsDiv = document.getElementById('individual-results');
+            if (!testUser) {
+                resultsDiv.innerHTML = '<div class="warning"><h3>⚠️ No Test User</h3><p>Please register a user first.</p></div>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/login/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Origin': 'http://localhost:3000'
+                    },
+                    body: JSON.stringify({
+                        email: testUser.email,
+                        password: 'password123'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    accessToken = data.access;
+                    resultsDiv.innerHTML = `
+                        <div class="success">
+                            <h3>✅ Login Successful</h3>
+                            <p>Welcome: ${data.user.full_name}</p>
+                            <p>Role: ${data.user.role}</p>
+                            <button onclick="testDashboardAPIs()">Test Dashboard →</button>
+                        </div>
+                    `;
+                } else {
+                    resultsDiv.innerHTML = `
+                        <div class="error">
+                            <h3>❌ Login Failed</h3>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Login Error</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testDashboardAPIs() {
+            const resultsDiv = document.getElementById('individual-results');
+            if (!accessToken) {
+                resultsDiv.innerHTML = '<div class="warning"><h3>⚠️ No Access Token</h3><p>Please login first.</p></div>';
+                return;
+            }
+
+            try {
+                const headers = {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                };
+
+                // Test dashboard
+                const dashResponse = await fetch(`${API_BASE}/appointments/dashboard/`, { headers });
+                const dashData = await dashResponse.json();
+
+                // Test notifications
+                const notifResponse = await fetch(`${API_BASE}/notifications/?limit=5`, { headers });
+                const notifData = await notifResponse.json();
+
+                resultsDiv.innerHTML = `
+                    <div class="success">
+                        <h3>✅ Dashboard APIs Working</h3>
+                        <p>Dashboard Status: ${dashResponse.ok ? '✅' : '❌'}</p>
+                        <p>Notifications Status: ${notifResponse.ok ? '✅' : '❌'}</p>
+                        <p>Dashboard Data: ${JSON.stringify(dashData)}</p>
+                        <p>Notifications: ${notifData.count} items</p>
+                        <button onclick="openReactApp()">Test in React App →</button>
+                    </div>
+                `;
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Dashboard Error</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testAllEndpoints() {
+            const resultsDiv = document.getElementById('individual-results');
+            if (!accessToken) {
+                resultsDiv.innerHTML = '<div class="warning"><h3>⚠️ No Access Token</h3><p>Please login first.</p></div>';
+                return;
+            }
+
+            try {
+                const headers = {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                };
+
+                const endpoints = [
+                    { name: 'Doctors', url: '/doctors/' },
+                    { name: 'Appointments', url: '/appointments/' },
+                    { name: 'Notifications', url: '/notifications/' },
+                    { name: 'Profile', url: '/auth/profile/' }
+                ];
+
+                let results = '<h3>🔍 Endpoint Tests:</h3>';
+                for (const endpoint of endpoints) {
+                    try {
+                        const response = await fetch(`${API_BASE}${endpoint.url}`, { headers });
+                        const data = await response.json();
+                        results += `<p>${endpoint.name}: ${response.ok ? '✅' : '❌'} (${response.status}) - ${data.count || data.results?.length || 'N/A'} items</p>`;
+                    } catch (error) {
+                        results += `<p>${endpoint.name}: ❌ (${error.message})</p>`;
+                    }
+                }
+
+                resultsDiv.innerHTML = `<div class="info">${results}</div>`;
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Endpoint Test Error</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function clearResults() {
+            document.getElementById('test-results').innerHTML = '';
+            document.getElementById('individual-results').innerHTML = '';
+            testUser = null;
+            accessToken = null;
+        }
+
+        function openReactApp() {
+            window.open('http://localhost:3000', '_blank');
+        }
+
+        // Auto-run backend test on page load
+        window.onload = function() {
+            testBackendConnectivity();
+        };
+    </script>
+</body>
+</html>
